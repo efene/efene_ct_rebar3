@@ -4,7 +4,7 @@
 -export([init/1, do/1, format_error/1]).
 
 -define(PROVIDER, ct).
--define(DEPS, []).
+-define(DEPS, [{default, app_discovery}]).
 
 %% ===================================================================
 %% Public API
@@ -20,6 +20,7 @@ init(State) ->
             {example, "rebar efene ct"}, % How to use the plugin
             {opts, []},                  % list of options understood by the plugin
             {short_desc, "efene rebar3 common test plugin"},
+            %{hooks, {[], [{default, ct}]}},
             {desc, ""}
     ]),
     {ok, rebar_state:add_provider(State, Provider)}.
