@@ -1,0 +1,10 @@
+{application, efene_ct_rebar3,
+ [{description, "efene rebar3 common test plugin"}
+ ,{vsn, "0.1.0"}
+ ,{registered, []}
+ ,{applications,
+    [kernel,stdlib]}
+ ,{env,[]}
+ ,{modules, []}
+ ,{env, [{providers, [efene]}]}
+ ]}.
