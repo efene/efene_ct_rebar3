@@ -20,7 +20,7 @@ init(State) ->
             {example, "rebar efene ct"}, % How to use the plugin
             {opts, []},                  % list of options understood by the plugin
             {short_desc, "efene rebar3 common test plugin"},
-            %{hooks, {[], [{default, ct}]}},
+            {hooks, {[], [{default, ct}]}},
             {desc, ""}
     ]),
     {ok, rebar_state:add_provider(State, Provider)}.
