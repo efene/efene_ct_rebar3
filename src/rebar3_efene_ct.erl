@@ -1,4 +1,4 @@
--module(efene_ct_rebar3).
+-module(rebar3_efene_ct).
 -behaviour(provider).
 
 -export([init/1, do/1, format_error/1]).
