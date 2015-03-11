@@ -1,4 +1,4 @@
-{application, efene_ct_rebar3,
+{application, rebar3_efene_ct,
  [{description, "efene rebar3 common test plugin"}
  ,{vsn, "0.1.0"}
  ,{registered, []}
