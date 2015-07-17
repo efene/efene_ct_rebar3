@@ -27,7 +27,7 @@ init(State) ->
 
 -spec do(rebar_state:t()) -> {ok, rebar_state:t()} | {error, string()}.
 do(State) ->
-    lists:foreach(fun run_tests/1, rebar_state:project_apps(State)),
+    run_tests(State),
     {ok, State}.
 
 -spec format_error(any()) ->  iolist().
@@ -38,25 +38,36 @@ format_error(Reason) ->
 %% Private API
 %% ===================================================================
 
-compile(Path, DestPath) ->
+compile(Path, DestPath, ErlOpts) ->
     io:format("Compiling ~s~n", [Path]),
-    case efene:compile(Path, DestPath) of
+    case efene:compile(Path, DestPath, ErlOpts) of
         {error, _}=Error ->
-            Reason = fn_error:normalize(Error),
-            io:format("error:~s~n", [Reason]);
-        Other -> Other
+            efene:print_errors([Error], "errors");
+        {error, Errors, Warnings} ->
+            efene:print_errors(Errors, "errors"),
+            efene:print_errors(Warnings, "warnings"),
+            ok;
+        {ok, CompileInfo} ->
+            efene:print_errors(proplists:get_value(warnings, CompileInfo, []), "warnings"),
+            ok;
+        Other ->
+            io:format("unknown result: ~p~n", [Other]),
+            Other
     end.
 
-run_tests(App) ->
-    compile_sources(App).
+run_tests(State) ->
+    compile_sources(State).
 
 
-compile_sources(App) ->
-    Path = filename:join(rebar_app_info:dir(App), "test"),
-    DestPath = filename:join(rebar_app_info:dir(App), "test"),
+compile_sources(State) ->
+    Path = filename:join(rebar_state:dir(State), "test"),
+    DestPath = filename:join(rebar_state:dir(State), "test"),
     ok = filelib:ensure_dir(filename:join(DestPath, "a")),
     Mods = find_source_files(Path),
-    lists:foreach(fun (ModPath) -> compile(ModPath, DestPath) end, Mods),
+    ErlOpts = rebar_utils:erl_opts(State),
+    lists:foreach(fun (ModPath) ->
+                          compile(ModPath, DestPath, ErlOpts)
+                  end, Mods),
     ok.
 
 find_source_files(Path) ->
