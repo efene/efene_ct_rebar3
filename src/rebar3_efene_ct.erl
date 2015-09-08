@@ -4,7 +4,7 @@
 -export([init/1, do/1, format_error/1]).
 
 -define(PROVIDER, ct).
--define(DEPS, [{default, app_discovery}, {efene, compile}]).
+-define(DEPS, [{default, app_discovery}]).
 
 %% ===================================================================
 %% Public API
@@ -27,7 +27,26 @@ init(State) ->
 
 -spec do(rebar_state:t()) -> {ok, rebar_state:t()} | {error, string()}.
 do(State) ->
-    run_tests(State),
+    Apps = case rebar_state:current_app(State) of
+               undefined ->
+                   rebar_state:project_apps(State);
+               AppInfo ->
+                   [AppInfo]
+           end,
+    [begin
+         Opts = rebar_app_info:opts(AppInfo),
+         OutDir = rebar_app_info:out_dir(AppInfo),
+         SourceDir = filename:join(rebar_app_info:dir(AppInfo), "test"),
+         FoundFiles = rebar_utils:find_files(SourceDir, ".*\\.fn\$"),
+
+         CompileFun = fun(Source, Opts1) ->
+                              ErlOpts = rebar_opts:erl_opts(Opts1),
+                              compile_source(State, ErlOpts, Source, OutDir)
+                      end,
+
+         rebar_base_compiler:run(Opts, [], FoundFiles, CompileFun)
+     end || AppInfo <- Apps],
+
     {ok, State}.
 
 -spec format_error(any()) ->  iolist().
@@ -55,20 +74,9 @@ compile(Path, DestPath, ErlOpts) ->
             Other
     end.
 
-run_tests(State) ->
-    compile_sources(State).
-
-
-compile_sources(State) ->
-    Path = filename:join(rebar_state:dir(State), "test"),
-    DestPath = filename:join(rebar_state:dir(State), "test"),
-    ok = filelib:ensure_dir(filename:join(DestPath, "a")),
-    Mods = find_source_files(Path),
-    ErlOpts = rebar_opts:erl_opts(rebar_state:opts(State)),
-    lists:foreach(fun (ModPath) ->
-                          compile(ModPath, DestPath, ErlOpts)
-                  end, Mods),
+compile_source(_State, ErlOpts, Source, DestPath) ->
+    NewDestPath = filename:join(DestPath, "test"),
+    ok = filelib:ensure_dir(filename:join(NewDestPath, "a")),
+    io:format("Compiling ~s~n", [Source]),
+    compile(Source, NewDestPath, ErlOpts),
     ok.
-
-find_source_files(Path) ->
-    [filename:join(Path, Mod) || Mod <- filelib:wildcard("*.fn", Path)].
