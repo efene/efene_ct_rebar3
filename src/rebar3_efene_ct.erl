@@ -64,7 +64,7 @@ compile_sources(State) ->
     DestPath = filename:join(rebar_state:dir(State), "test"),
     ok = filelib:ensure_dir(filename:join(DestPath, "a")),
     Mods = find_source_files(Path),
-    ErlOpts = rebar_utils:erl_opts(State),
+    ErlOpts = rebar_opts:erl_opts(rebar_state:opts(State)),
     lists:foreach(fun (ModPath) ->
                           compile(ModPath, DestPath, ErlOpts)
                   end, Mods),
